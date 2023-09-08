@@ -2,12 +2,24 @@
 
 set -e
 
-if [[ $1 == "clean" ]]; then
+if [[ $2 == "clean" ]]; then
 	rm build/* -rf
 fi
 
-gcc ./handmade.c -o build/handmade -lX11
+if [[ $1 == "linux" ]]; then
 
-if [[ $1 == "run" ]]; then
-	build/handmade
+	gcc ./handmade.c -o build/handmade -lX11
+
+	if [[ $2 == "run" ]]; then
+		build/handmade
+	fi
+
+elif [[ $1 == "windows" ]]; then
+
+	winegcc ./handmade_win.c -o build/handmade_win
+
+	if [[ $2 == "run" ]]; then
+		build/handmade_win.exe
+	fi
+
 fi
