@@ -8,7 +8,7 @@ fi
 
 if [[ $1 == "linux" ]]; then
 
-	gcc ./handmade.c -o build/handmade -lX11
+	gcc ./handmade.c -o build/handmade -lX11 -Wall
 
 	if [[ $2 == "run" ]]; then
 		build/handmade
@@ -16,7 +16,7 @@ if [[ $1 == "linux" ]]; then
 
 elif [[ $1 == "windows" ]]; then
 
-	winegcc ./handmade_win.c -o build/handmade_win
+	winegcc ./handmade_win.c -o build/handmade_win -lgdi32 -Wall
 
 	if [[ $2 == "run" ]]; then
 		build/handmade_win.exe

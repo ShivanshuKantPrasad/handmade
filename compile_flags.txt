@@ -1,4 +1,4 @@
 -I/nix/store/q326z33nbsiqcfyx3r32a2lh57m91vl2-libX11-1.8.6-dev/include 
 -I/nix/store/s93gkfvkk1d5h79inll2mbs9z1wy5p2l-xorgproto-2023.2/include
 -lX11
--I/nix/store/04f584x1zdh4900dfsxna0gg15m91am9-wine-wow-wayland-8.0/include/wine/windows
+-I/nix/store/wjrb8kk9j5vn6hbfk6gymm61lkach5hd-wine-wow-wayland-8.0/include/wine/windows
