@@ -1,42 +1,78 @@
-#include "X11/X.h"
+#include <X11/Xlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <X11/Xlib.h>
-
 int main() {
 
-  Display *display;
-  Window window;
-  XEvent event;
-  int screen;
+  int width = 400;
+  int height = 400;
 
-  display = XOpenDisplay(NULL);
+  Display *display = XOpenDisplay(NULL);
   if (display == NULL) {
     fprintf(stderr, "Cannot open display");
     exit(1);
   }
 
-  screen = DefaultScreen(display);
+  Window window = XCreateSimpleWindow(display, XDefaultRootWindow(display), 0,
+                                      0, width, height, 1, 0, 0);
 
-  window = XCreateSimpleWindow(display, RootWindow(display, screen), 10, 10,
-                               100, 100, 1, BlackPixel(display, screen),
-                               WhitePixel(display, screen));
+  XWindowAttributes wa;
+  XGetWindowAttributes(display, window, &wa);
 
-  Atom del_window = XInternAtom(display, "WM_DELETE_WINDOW", 0);
+  GC gc = XCreateGC(display, window, 0, NULL);
+
+  Atom del_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &del_window, 1);
+
+  XSelectInput(display, window, KeyPressMask | ExposureMask);
 
   XMapWindow(display, window);
 
+  unsigned char *image = (unsigned char *)malloc(width * height * 4);
+  int stride = width * 4;
+
+  uint8_t *pixel = image;
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+
+      *pixel = 255; // blue
+      pixel++;
+
+      *pixel = 255; // green
+      pixel++;
+
+      *pixel = 0; // red
+      pixel++;
+
+      *pixel = 0; // padding
+      pixel++;
+    }
+  }
+
+  XImage *ximage = XCreateImage(display, wa.visual, wa.depth, ZPixmap, 0, image,
+                                width, height, 32, 0);
+
   while (1) {
+    XEvent event;
     XNextEvent(display, &event);
+
     switch (event.type) {
-    case KeyPress:
-    case ClientMessage:
-      goto breakout;
-    case Expose:
-      XFillRectangle(display, window, DefaultGC(display, screen), 10, 10, 10,
-                     10);
+
+    case KeyPress: {
+      fprintf(stderr, "Key Pressed %d\n", event.xkey.keycode);
+    } break;
+
+    case ClientMessage: {
+      if ((Atom)event.xclient.data.l[0] == del_window) {
+        fprintf(stderr, "WM_DELETE_WINDOW\n");
+        goto breakout;
+      }
+    } break;
+
+    case Expose: {
+      XPutImage(display, window, gc, ximage, 0, 0, 0, 0, width, height);
+    } break;
     }
   }
 

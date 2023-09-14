@@ -12,6 +12,9 @@
       with pkgs; {
         devShells.default = mkShell {
           buildInputs = [ pkg-config clang-tools gcc xorg.libX11 ];
+          shellHook = ''
+            export MANPATH=${xorg.libX11.man}/share/man
+          '';
         };
       });
 }
