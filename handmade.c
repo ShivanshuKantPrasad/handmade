@@ -1,3 +1,4 @@
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -25,14 +26,24 @@ int main() {
   Atom del_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &del_window, 1);
 
+  Atom wm_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
+  Atom wm_dialog = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+  XChangeProperty(display, window, wm_type, XA_ATOM, 32, PropModeAppend,
+                  (unsigned char *)&wm_dialog, 1);
+
+  /* Atom wm_state = XInternAtom(display, "_NET_WM_STATE", False); */
+  /* Atom wm_floating = XInternAtom(display, "_NET_WM_STATE_MODAL", False); */
+  /* XChangeProperty(display, window, wm_state, XA_ATOM, 32, PropModeAppend, */
+  /*                 (unsigned char*) &wm_floating, 1); */
+
   XSelectInput(display, window, KeyPressMask | ExposureMask);
 
   XMapWindow(display, window);
 
-  unsigned char *image = (unsigned char *)malloc(width * height * 4);
+  char *image = (char *)malloc(width * height * 4);
   int stride = width * 4;
 
-  uint8_t *pixel = image;
+  uint8_t *pixel = (uint8_t *)image;
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
 
