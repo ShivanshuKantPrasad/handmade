@@ -16,7 +16,7 @@ if [[ $1 == "linux" ]]; then
 
 elif [[ $1 == "windows" ]]; then
 
-	winegcc ./handmade_win.c -o build/handmade_win -lgdi32 -Wall
+	winegcc ./handmade_win.cpp -o build/handmade_win -lgdi32 -Wall
 
 	if [[ $2 == "run" ]]; then
 		build/handmade_win.exe

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <windows.h>
 #include <winuser.h>
+
+#include <dsound.h>
 #include <xinput.h>
 
 #define local_persist static
@@ -24,24 +26,98 @@ global_variable struct win32_offscreen_buffer Buffer;
 #define X_INPUT_GET_STATE(name)                                                \
   DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
 typedef X_INPUT_GET_STATE(x_input_get_state);
-X_INPUT_GET_STATE(XInputGetStateStub) { return 0; }
+X_INPUT_GET_STATE(XInputGetStateStub) { return ERROR_DEVICE_NOT_CONNECTED; }
 global_variable x_input_get_state *XInputGetState_ = XInputGetStateStub;
 #define XInputGetState XInputGetState_
 
 #define X_INPUT_SET_STATE(name)                                                \
   DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
 typedef X_INPUT_SET_STATE(x_input_set_state);
-X_INPUT_SET_STATE(XInputSetStateStub) { return 0; }
+X_INPUT_SET_STATE(XInputSetStateStub) { return ERROR_DEVICE_NOT_CONNECTED; }
 global_variable x_input_set_state *XInputSetState_ = XInputSetStateStub;
 #define XInputSetState XInputSetState_
 
+#define DIRECT_SOUND_CREATE(name)                                              \
+  HRESULT WINAPI name(LPCGUID pcGuidDevice, LPDIRECTSOUND *ppDS,               \
+                      LPUNKNOWN pUnkOuter)
+typedef DIRECT_SOUND_CREATE(direct_sound_create);
+
 internal void Win32LoadXInput(void) {
-  HMODULE XInputLibrary = LoadLibrary("xinput1_3.dll");
+  HMODULE XInputLibrary = LoadLibrary("xinput1_4.dll");
+  if (!XInputLibrary)
+    XInputLibrary = LoadLibrary("xinput1_3.dll");
+
   if (XInputLibrary) {
     XInputGetState =
         (x_input_get_state *)GetProcAddress(XInputLibrary, "XInputGetState");
+    if (!XInputGetState)
+      XInputGetState = XInputGetStateStub;
+
     XInputSetState =
         (x_input_set_state *)GetProcAddress(XInputLibrary, "XInputSetState");
+    if (!XInputSetState)
+      XInputSetState = XInputSetStateStub;
+
+  } else {
+    // TODO: Diagnostic
+  }
+}
+
+internal void Win32InitDSound(HWND Window, int32_t SamplesPerSecond,
+                              int32_t BufferSize) {
+  // Load the library
+  HMODULE DSoundLibrary = LoadLibrary("dsound.dll");
+  if (!DSoundLibrary)
+    return;
+
+  direct_sound_create *DirectSoundCreate =
+      (direct_sound_create *)GetProcAddress(DSoundLibrary, "DirectSoundCreate");
+  LPDIRECTSOUND DirectSound;
+  if (DirectSoundCreate && SUCCEEDED(DirectSoundCreate(0, &DirectSound, 0))) {
+
+    WAVEFORMATEX WaveFormat;
+    WaveFormat.wFormatTag = WAVE_FORMAT_PCM;
+    WaveFormat.nChannels = 2;
+    WaveFormat.nSamplesPerSec = SamplesPerSecond;
+    WaveFormat.wBitsPerSample = 16;
+    WaveFormat.nBlockAlign =
+        (WaveFormat.nChannels * WaveFormat.wBitsPerSample) / 8;
+    WaveFormat.nAvgBytesPerSec =
+        WaveFormat.nSamplesPerSec * WaveFormat.nBlockAlign;
+    WaveFormat.cbSize = 0;
+
+    if (SUCCEEDED(DirectSound->SetCooperativeLevel(Window, DSSCL_PRIORITY))) {
+
+      DSBUFFERDESC BufferDescription;
+      BufferDescription.dwSize = sizeof(BufferDescription);
+      BufferDescription.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+      LPDIRECTSOUNDBUFFER PrimaryBuffer;
+      if (SUCCEEDED(DirectSound->CreateSoundBuffer(&BufferDescription,
+                                                   &PrimaryBuffer, 0))) {
+        if (SUCCEEDED(PrimaryBuffer->SetFormat(&WaveFormat))) {
+        } else {
+        }
+      } else {
+      }
+
+    } else {
+    }
+
+    DSBUFFERDESC BufferDescription;
+    BufferDescription.dwSize = sizeof(BufferDescription);
+    BufferDescription.dwFlags = 0;
+    BufferDescription.dwBufferBytes = BufferSize;
+    BufferDescription.lpwfxFormat = &WaveFormat;
+    LPDIRECTSOUNDBUFFER SecondaryBuffer;
+    if (SUCCEEDED(DirectSound->CreateSoundBuffer(&BufferDescription,
+                                                 &SecondaryBuffer, 0))) {
+
+    } else {
+    }
+
+  } else {
+    // TODO: Diagnostic
   }
 }
 
@@ -103,8 +179,8 @@ internal struct window_dimensions Win32WindowDimension(HWND Window) {
   RECT ClientRect;
   GetClientRect(Window, &ClientRect);
   struct window_dimensions Dimension = {
-      .Height = ClientRect.bottom - ClientRect.top,
       .Width = ClientRect.right - ClientRect.left,
+      .Height = ClientRect.bottom - ClientRect.top,
   };
   return Dimension;
 }
@@ -145,6 +221,13 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message,
     uint32_t VKCODE = WParam;
     bool WasDown = ((LParam & (1 << 30)) != 0);
     bool IsDown = ((LParam & (1 << 31)) == 0);
+    bool AltKeyWasDown = ((LParam & (1 << 29)) != 0);
+
+    if (WasDown != IsDown) {
+      if (AltKeyWasDown && VKCODE == VK_F4) {
+        Running = false;
+      }
+    }
 
   } break;
 
