@@ -1,5 +1,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <math.h>
+#include <pulse/simple.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +41,35 @@ int main() {
   XSelectInput(display, window, KeyPressMask | ExposureMask);
 
   XMapWindow(display, window);
+
+  pa_simple *s;
+  pa_sample_spec ss;
+
+  ss.format = PA_SAMPLE_S16NE;
+  ss.channels = 2;
+  ss.rate = 44100;
+
+  int bytes_per_sample = ss.channels * sizeof(int16_t);
+  int frequency = 256;
+  int wave_period = ss.rate / frequency;
+  int duration = 5;
+  int cycles = duration * frequency;
+  int no_sample = wave_period * cycles;
+  int16_t *buffer = malloc(no_sample * bytes_per_sample);
+
+  for (int i = 0; i < no_sample; i++) {
+
+    float t = 2.0f * 3.14f * (float)i / (float)wave_period;
+    float SineValue = sinf(t);
+    int16_t value = SineValue * 12000;
+    buffer[2 * i] = value;
+    buffer[2 * i + 1] = value;
+  }
+
+  s = pa_simple_new(NULL, "Handmade", PA_STREAM_PLAYBACK, NULL, "Music", &ss,
+                    NULL, NULL, NULL);
+
+  pa_simple_write(s, buffer, no_sample * bytes_per_sample, NULL);
 
   char *image = (char *)malloc(width * height * 4);
   int stride = width * 4;
