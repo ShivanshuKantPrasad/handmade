@@ -26,6 +26,10 @@ void stream_success_cb(pa_stream *stream, int success, void *userdata) {
 void stream_write_cb(pa_stream *stream, size_t requested_bytes,
                      void *userdata) {
 
+  static int index = 0;
+  int bytes_per_sample = 2 * sizeof(int16_t);
+  int frequency = 256;
+  int wave_period = 44100 / frequency;
   int bytes_remaining = requested_bytes;
 
   while (bytes_remaining > 0) {
@@ -38,10 +42,13 @@ void stream_write_cb(pa_stream *stream, size_t requested_bytes,
 
     pa_stream_begin_write(stream, (void **)&buffer, &bytes_to_fill);
 
-    for (i = 0; i < bytes_to_fill; i += 2) {
-      int16_t value = (i % 100) * 100;
-      buffer[i] = value;
-      buffer[i + 1] = value;
+    size_t samples_to_fill = bytes_to_fill / bytes_per_sample;
+    for (i = 0; i < samples_to_fill; i++) {
+      float t = 2.0f * 3.14f * (float)index / (float)wave_period;
+      int16_t value = sinf(t) * 4000;
+      buffer[2 * i] = value;
+      buffer[2 * i + 1] = value;
+      index++;
     }
 
     pa_stream_write(stream, buffer, bytes_to_fill, NULL, 0LL, PA_SEEK_RELATIVE);
