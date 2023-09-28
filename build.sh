@@ -8,7 +8,7 @@ fi
 
 if [[ $1 == "linux" ]]; then
 
-	gcc ./handmade.c -o build/handmade -lpulse-simple -pthread -lm -lX11 -Wall
+	gcc ./handmade.c -o build/handmade -lpulse -lpulse-simple -pthread -lm -lX11 -Wall
 
 	if [[ $2 == "run" ]]; then
 		build/handmade
