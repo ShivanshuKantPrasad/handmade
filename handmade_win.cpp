@@ -8,6 +8,7 @@
 #include <winuser.h>
 
 #include <dsound.h>
+#include <x86intrin.h>
 #include <xinput.h>
 
 #define local_persist static
@@ -300,6 +301,9 @@ void Win32FillSoundBuffer(win32_sound_output *SoundOutput, DWORD ByteToLock,
 
 int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine,
                      int ShowCmd) {
+  LARGE_INTEGER PerCountFrequencyResult;
+  QueryPerformanceFrequency(&PerCountFrequencyResult);
+  int64_t PerfCountFrequency = PerCountFrequencyResult.QuadPart;
   Win32LoadXInput();
 
   // Create a Window Class
@@ -340,6 +344,12 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine,
   GlobalSecondaryBuffer->Play(0, 0, DSBPLAY_LOOPING);
 
   Win32ResizeDIBSection(&Buffer, 1280, 720);
+
+  LARGE_INTEGER LastCounter;
+  QueryPerformanceCounter(&LastCounter);
+
+  int64_t LastCycleCount;
+  LastCycleCount = __rdtsc();
 
   Running = true;
   while (Running) {
@@ -403,6 +413,19 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine,
     Win32DisplayWindow(DeviceContext, Dimension.Width, Dimension.Height,
                        Buffer);
     ReleaseDC(Window, DeviceContext);
+
+    int64_t EndCycleCount = __rdtsc();
+    LARGE_INTEGER EndCounter;
+    QueryPerformanceCounter(&EndCounter);
+
+    int64_t CyclesElapsed = EndCycleCount - LastCycleCount;
+    int64_t CounterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
+    float TimeElapsed = (float)CounterElapsed / PerfCountFrequency;
+    printf("%fms %.2fFPS - %ld MHz\n", TimeElapsed * 1000, 1 / TimeElapsed,
+           CyclesElapsed / 1000000);
+
+    LastCounter = EndCounter;
+    LastCycleCount = EndCycleCount;
   }
   return 0;
 }
