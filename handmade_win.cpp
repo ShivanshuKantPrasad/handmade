@@ -11,6 +11,9 @@
 #include <x86intrin.h>
 #include <xinput.h>
 
+#include "handmade.cpp"
+#include "handmade.h"
+
 #define local_persist static
 #define global_variable static
 #define internal static
@@ -132,32 +135,6 @@ internal void Win32InitDSound(HWND Window, int32_t SamplesPerSecond,
 
   } else {
     // TODO: Diagnostic
-  }
-}
-
-internal void Win32Render(struct win32_offscreen_buffer *Buffer) {
-  uint8_t *Row = (uint8_t *)Buffer->Memory;
-  for (int y = 0; y < Buffer->BitmapInfo.bmiHeader.biHeight; ++y) {
-    uint8_t *Pixel = (uint8_t *)Row;
-    for (int x = 0; x < Buffer->BitmapInfo.bmiHeader.biWidth; ++x) {
-
-      // Blue
-      *Pixel = 0x00;
-      ++Pixel;
-
-      // Green
-      *Pixel = x % 255;
-      ++Pixel;
-
-      // Red
-      *Pixel = y % 255;
-      ++Pixel;
-
-      // Padding
-      *Pixel = 0x00;
-      ++Pixel;
-    }
-    Row += Buffer->Pitch;
   }
 }
 
@@ -388,7 +365,14 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine,
 
     HDC DeviceContext = GetDC(Window);
     struct window_dimensions Dimension = Win32WindowDimension(Window);
-    Win32Render(&Buffer);
+
+    game_offscreen_buffer GameBuffer = {
+        .Memory = Buffer.Memory,
+        .BytesPerPixel = Buffer.BytesPerPixel,
+        .Width = Buffer.Width,
+        .Height = Buffer.Height,
+    };
+    Win32Render(&GameBuffer);
 
     DWORD PlayCursor;
     DWORD WriteCursor;
