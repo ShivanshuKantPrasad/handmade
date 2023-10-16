@@ -1,7 +1,3 @@
-#include "pulse/channelmap.h"
-#include "pulse/context.h"
-#include "pulse/def.h"
-#include "pulse/thread-mainloop.h"
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <math.h>

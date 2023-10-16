@@ -6,3 +6,4 @@ tmp/
 .direnv/
 build/
 .cache/
+cmake*
