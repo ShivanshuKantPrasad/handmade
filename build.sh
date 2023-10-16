@@ -22,4 +22,11 @@ elif [[ $1 == "windows" ]]; then
 		build/handmade_win.exe
 	fi
 
+elif [[ $1 == "wayland" ]]; then
+
+	gcc xdg-shell-protocol.c handmade_wayland.cpp -o build/handmade_wayland -lwayland-client
+
+	if [[ $2 == "run" ]]; then
+		build/handmade_wayland
+	fi
 fi

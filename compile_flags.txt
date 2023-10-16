@@ -1,6 +1,8 @@
 -D_REENTRANT -I/nix/store/q5hd1lswngdssv0n4wvsi3v28dbddqyg-libpulseaudio-16.1-dev/include
 -I/nix/store/q326z33nbsiqcfyx3r32a2lh57m91vl2-libX11-1.8.6-dev/include 
 -I/nix/store/s93gkfvkk1d5h79inll2mbs9z1wy5p2l-xorgproto-2023.2/include
--I/nix/store/wjrb8kk9j5vn6hbfk6gymm61lkach5hd-wine-wow-wayland-8.0/include/wine/windows
+-I/nix/store/j3xs2fbjjsb8p7v9g76fn5mwam1fwb76-wine-wow-wayland-8.0/include/wine/windows/
+-I/nix/store/jg74fkb8rgkybs18zryzdcsqwp901kgj-wayland-1.22.0-dev/include
 -lX11
 -lpulse
+-lwayland-scanner

@@ -11,7 +11,7 @@
       in
       with pkgs; {
         devShells.default = mkShell {
-          buildInputs = [ pkg-config clang-tools gcc xorg.libX11 libpulseaudio];
+          buildInputs = [ wayland pkg-config clang-tools gcc xorg.libX11 libpulseaudio];
           shellHook = ''
             export MANPATH=${xorg.libX11.man}/share/man
           '';
