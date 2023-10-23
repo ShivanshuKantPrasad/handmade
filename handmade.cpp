@@ -1,7 +1,8 @@
 #include "handmade.h"
+#include <math.h>
 #include <stdint.h>
 
-static void Win32Render(struct game_offscreen_buffer *Buffer) {
+static void GameRender(struct game_offscreen_buffer *Buffer) {
   uint8_t *Row = (uint8_t *)Buffer->Memory;
   for (int y = 0; y < Buffer->Height; ++y) {
     uint8_t *Pixel = (uint8_t *)Row;
@@ -25,4 +26,28 @@ static void Win32Render(struct game_offscreen_buffer *Buffer) {
     }
     Row += Buffer->Width * Buffer->BytesPerPixel;
   }
+}
+
+static void GameOutputSound(struct game_sound_output_buffer *SoundBuffer) {
+  static float tSine;
+  int16_t ToneVolume = 3000;
+  int ToneHz = 256;
+  int WavePeriod = SoundBuffer->SamplesPerSecond / ToneHz;
+  int16_t *SampleOut = SoundBuffer->Samples;
+  for (int SampleIndex = 0; SampleIndex < SoundBuffer->SampleCount;
+       SampleIndex++) {
+    float SineValue = sinf(tSine);
+    int16_t SampleValue = (int16_t)(SineValue * ToneVolume);
+    *SampleOut++ = SampleValue;
+    *SampleOut++ = SampleValue;
+
+    tSine += 2.0f * M_PI / (float)WavePeriod;
+  }
+}
+
+static void GameUpdateAndRender(struct game_offscreen_buffer *Buffer,
+                                struct game_sound_output_buffer *SoundBuffer) {
+  // TODO: Allow sample offsets here for more robust platform options
+  GameOutputSound(SoundBuffer);
+  GameRender(Buffer);
 }
